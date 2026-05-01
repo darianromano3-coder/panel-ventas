@@ -1,0 +1,135 @@
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f0f1a;
+  color:#fff;
+}
+
+.layout{
+  display:flex;
+  min-height:100vh;
+}
+
+.sidebar{
+  width:200px;
+  background:#1a1a2e;
+  padding:10px;
+}
+
+.sidebar button{
+  width:100%;
+  margin-top:5px;
+  padding:10px;
+  border:none;
+  background:#111827;
+  color:#fff;
+  border-radius:6px;
+}
+
+.contenido{
+  flex:1;
+  padding:15px;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:10px;
+}
+
+.card{
+  background:#1a1a2e;
+  padding:10px;
+  border-radius:12px;
+}
+
+/* IMAGEN PRO */
+.card-img{
+  width:100%;
+  height:130px;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-box{
+  background:#1a1a2e;
+  padding:20px;
+  border-radius:10px;
+  width:90%;
+  max-width:400px;
+}
+
+input, select{
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+  border:none;
+  border-radius:6px;
+}
+
+button{
+  margin-top:5px;
+  padding:8px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  background:#7c3aed;
+  color:#fff;
+}
+
+.btn-danger{ background:#ef4444; }
+.btn-ok{ background:#10b981; }
+
+/* TABS */
+.tabs{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.tab{
+  padding:8px;
+  background:#111827;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+
+h2{
+  margin-bottom:10px;
+}
+
+.card p{
+  font-size:14px;
+  opacity:0.8;
+}
+
+.toggle-btn{
+  background:#374151;
+}
+
+.grafico{
+  height:200px;
+  display:flex;
+  align-items:flex-end;
+  gap:5px;
+}
+
+.bar{
+  flex:1;
+  background:#7c3aed;
+}
