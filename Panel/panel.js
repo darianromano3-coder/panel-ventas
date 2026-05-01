@@ -42,6 +42,7 @@ async function servicios(){
 
   let html = `
     <h1>🎬 Servicios</h1>
+
     <input id="serv_nombre" placeholder="Nombre">
     <input id="serv_img" placeholder="URL imagen">
     <button onclick="crearServicio()">Crear</button>
@@ -73,13 +74,7 @@ async function eliminarServicio(id){
   servicios();
 }
 
-// ================= PRODUCTOS =================
-async function productos(){
-  let { data } = await supabaseClient.from("productos").select("*");
-  listaProductos = data || [];
-  renderProductos();
-}
-//nueva funcion
+// ================= AUTOCOMPLETAR =================
 window.autocompletarServicio = function(nombreInputId, imgInputId){
 
   let nombre = document.getElementById(nombreInputId).value.toLowerCase();
@@ -87,7 +82,6 @@ window.autocompletarServicio = function(nombreInputId, imgInputId){
 
   if(!nombre || !imgInput) return;
 
-  // buscar coincidencia exacta o parcial
   let servicio = listaServicios.find(s =>
     s.nombre.toLowerCase() === nombre
   );
@@ -95,11 +89,17 @@ window.autocompletarServicio = function(nombreInputId, imgInputId){
   if(servicio){
     imgInput.value = servicio.imagen_url || "";
   } else {
-    // opcional: limpiar si no coincide
     imgInput.value = "";
   }
 };
-//nueva fincion
+
+// ================= PRODUCTOS =================
+async function productos(){
+  let { data } = await supabaseClient.from("productos").select("*");
+  listaProductos = data || [];
+  renderProductos();
+}
+
 function renderProductos(){
 
   let filtrados = listaProductos.filter(p =>
@@ -132,9 +132,6 @@ function renderProductos(){
 
   let input = document.getElementById("buscador");
   if(input){
-    input.focus();
-    input.setSelectionRange(input.value.length, input.value.length);
-
     input.oninput = (e)=>{
       filtroActual = e.target.value;
       renderProductos();
@@ -162,53 +159,11 @@ async function pedidos(){
 
     if(p.estado === "completado" && !mostrarCompletados) continue;
 
-    let { data: items } = await supabaseClient
-      .from("pedido_items")
-      .select("*")
-      .eq("pedido_id", p.id);
-
-    let detalleHTML = "";
-
-    if(items){
-      items.forEach((d,i)=>{
-        detalleHTML += `
-          <div class="card" style="margin-top:10px; background:#111827;">
-            <b>Pedido ${i+1}</b><br>
-            ${d.nombre_producto}<br>
-            $${d.precio}<br>
-            Pantallas: ${d.cantidad}
-          </div>
-        `;
-      });
-    }
-
-    let wa = `https://wa.me/${p.whatsapp}?text=Hola%20${p.nombre}%20sobre%20tu%20pedido%20${p.ticket}`;
-
     html += `
       <div class="card">
-
-        <h3>🎟 ${p.ticket}</h3>
-        <p>${p.nombre} ${p.apellido || ""}</p>
-
-        ${detalleHTML}
-
-        <p><b>Total: $${p.total}</b></p>
-
-        <a href="${wa}" target="_blank">
-          <button>💬 WhatsApp</button>
-        </a>
-
-        ${
-          p.estado === "pendiente"
-          ? `<button onclick="completar('${p.id}')">Completar</button>`
-          : `<p>✔ Completado</p>`
-        }
-
-        <!-- 🔥 NUEVO BOTÓN ELIMINAR -->
-        <button style="background:red" onclick="eliminarPedido('${p.id}')">
-          Eliminar
-        </button>
-
+        <h3>${p.ticket}</h3>
+        <p>${p.nombre}</p>
+        <p>Total: $${p.total}</p>
       </div>
     `;
   }
@@ -216,61 +171,12 @@ async function pedidos(){
   document.getElementById("contenido").innerHTML = html;
 }
 
-// ================= ELIMINAR PEDIDO =================
-async function eliminarPedido(id){
-
-  if(!confirm("¿Eliminar este pedido?")) return;
-
-  // eliminar items primero
-  await supabaseClient
-    .from("pedido_items")
-    .delete()
-    .eq("pedido_id", id);
-
-  // eliminar pedido
-  await supabaseClient
-    .from("pedidos")
-    .delete()
-    .eq("id", id);
-
+window.togglePedidos = function(){
+  mostrarCompletados = !mostrarCompletados;
   pedidos();
-}
+};
 
-// ================= COMPLETAR =================
-async function completar(id){
-
-  let { data: pedido } = await supabaseClient
-    .from("pedidos")
-    .select("*")
-    .eq("id",id)
-    .single();
-
-  await supabaseClient
-    .from("pedidos")
-    .update({estado:"completado"})
-    .eq("id",id);
-
-  let { data: items } = await supabaseClient
-    .from("pedido_items")
-    .select("*")
-    .eq("pedido_id",id);
-
-  if(items){
-    for(let d of items){
-      await supabaseClient.from("cuentas_activas").insert([{
-        cliente: pedido.nombre,
-        whatsapp: pedido.whatsapp,
-        servicio: d.nombre_producto,
-        pantallas: d.cantidad,
-        vence: new Date(Date.now()+30*24*60*60*1000).toISOString()
-      }]);
-    }
-  }
-
-  pedidos();
-}
-
-// ================= RESTO =================
+// ================= CUENTAS =================
 async function cuentas(){
   let { data } = await supabaseClient.from("cuentas_activas").select("*");
 
@@ -283,31 +189,55 @@ async function cuentas(){
   document.getElementById("contenido").innerHTML = html;
 }
 
+// ================= PROVEEDORES (RESTO COMPLETO) =================
 async function proveedores(){
+
   let { data } = await supabaseClient.from("proveedores").select("*");
 
   let html = `
     <h1>🏢 Proveedores</h1>
-    <input id="prov" placeholder="Nombre Proveedor"><button onclick="crearProveedor()">Crear</button>
+
+    <input id="prov_nombre" placeholder="Nombre proveedor">
+    <button onclick="crearProveedor()">Crear</button>
   `;
 
   data.forEach(p=>{
-    html+=`<div class="card">${p.nombre}<button onclick="eliminarProveedor('${p.id}')">Eliminar</button></div>`;
+    html += `
+      <div class="card">
+        ${p.nombre}
+        <button onclick="eliminarProveedor('${p.id}')">Eliminar</button>
+      </div>
+    `;
   });
 
   document.getElementById("contenido").innerHTML = html;
 }
 
-async function crearProveedor(){
-  await supabaseClient.from("proveedores").insert([{nombre:prov.value}]);
-  proveedores();
-}
+window.crearProveedor = async function(){
 
-async function eliminarProveedor(id){
-  await supabaseClient.from("proveedores").delete().eq("id",id);
-  proveedores();
-}
+  let input = document.getElementById("prov_nombre");
+  if(!input.value) return;
 
+  await supabaseClient.from("proveedores").insert([{
+    nombre: input.value
+  }]);
+
+  proveedores();
+};
+
+window.eliminarProveedor = async function(id){
+
+  if(!confirm("¿Eliminar proveedor?")) return;
+
+  await supabaseClient
+    .from("proveedores")
+    .delete()
+    .eq("id", id);
+
+  proveedores();
+};
+
+// ================= GANANCIAS =================
 async function ganancias(){
 
   let { data } = await supabaseClient.from("productos").select("*");
@@ -328,16 +258,8 @@ async function ganancias(){
   `;
 }
 
-
-
-
-
-
-// ================= MODAL CREAR =================
-window.modalCrear = async function(){
-
-  let { data: servicios } = await supabaseClient.from("servicios").select("*") || [];
-  listaServicios = servicios || [];
+// ================= MODALES =================
+window.modalCrear = function(){
 
   let opciones = listaServicios.map(s =>
     `<option value="${s.nombre}"></option>`
@@ -385,10 +307,10 @@ window.modalCrear = async function(){
       </div>
     </div>
   `);
+
+  togglePantallas();
 };
 
-
-// ================= MODAL EDITAR =================
 window.modalEditar = async function(id){
 
   let { data } = await supabaseClient
@@ -396,13 +318,6 @@ window.modalEditar = async function(id){
     .select("*")
     .eq("id",id)
     .single();
-
-  let { data: servicios } = await supabaseClient.from("servicios").select("*") || [];
-  listaServicios = servicios || [];
-
-  let opciones = listaServicios.map(s =>
-    `<option value="${s.nombre}"></option>`
-  ).join("");
 
   cerrarModal();
 
@@ -412,34 +327,11 @@ window.modalEditar = async function(id){
 
         <h3>✏️ Editar Producto</h3>
 
-        <label>Servicio</label>
-        <input list="serviciosList" id="e_nombre"
-        value="${data.nombre}"
-        oninput="autocompletarServicio('e_nombre','e_img')">
-        <datalist id="serviciosList">${opciones}</datalist>
-
-        <label>Imagen</label>
+        <input id="e_nombre" value="${data.nombre}">
         <input id="e_img" value="${data.imagen_url || ""}">
-
-        <label>Descripción</label>
         <input id="e_desc" value="${data.descripcion || ""}">
-
-        <label>Precio</label>
-        <input id="e_precio" type="number" value="${data.precio}">
-
-        <label>Costo</label>
-        <input id="e_costo" type="number" value="${data.costo || 0}">
-
-        <label>Tipo</label>
-        <select id="e_tipo" onchange="togglePantallas()">
-          <option value="pantalla" ${data.tipo==="pantalla"?"selected":""}>Pantalla</option>
-          <option value="completa" ${data.tipo==="completa"?"selected":""}>Completa</option>
-        </select>
-
-        <div id="pantallasBox">
-          <label>Máx pantallas</label>
-          <input id="e_pantallas" type="number" value="${data.max_pantallas || ""}">
-        </div>
+        <input id="e_precio" value="${data.precio}">
+        <input id="e_costo" value="${data.costo || 0}">
 
         <button onclick="guardarEdit('${id}')">Guardar</button>
         <button onclick="cerrarModal()">Cancelar</button>
@@ -447,12 +339,43 @@ window.modalEditar = async function(id){
       </div>
     </div>
   `);
-
-  togglePantallas();
 };
 
+// ================= CREAR PRODUCTO =================
+window.crearProducto = async function(){
 
-// ================= TOGGLE PANTALLAS (FIX REAL) =================
+  await supabaseClient.from("productos").insert([{
+    nombre: n_nombre.value,
+    imagen_url: n_img.value,
+    descripcion: n_desc.value,
+    precio: Number(n_precio.value),
+    costo: Number(n_costo.value),
+    tipo: n_tipo.value,
+    max_pantallas: Number(n_pantallas.value || 0)
+  }]);
+
+  cerrarModal();
+  productos();
+};
+
+// ================= EDITAR PRODUCTO =================
+window.guardarEdit = async function(id){
+
+  await supabaseClient.from("productos")
+    .update({
+      nombre: e_nombre.value,
+      imagen_url: e_img.value,
+      descripcion: e_desc.value,
+      precio: Number(e_precio.value),
+      costo: Number(e_costo.value)
+    })
+    .eq("id",id);
+
+  cerrarModal();
+  productos();
+};
+
+// ================= PANTALLAS =================
 window.togglePantallas = function(){
 
   let tipo =
@@ -466,8 +389,7 @@ window.togglePantallas = function(){
   box.style.display = tipo.value === "completa" ? "none" : "block";
 };
 
-
-// ================= CERRAR MODAL (SEGURO) =================
+// ================= CERRAR MODAL =================
 window.cerrarModal = function(){
   let m = document.getElementById("modal");
   if(m) m.remove();
