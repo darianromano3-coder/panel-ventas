@@ -79,7 +79,27 @@ async function productos(){
   listaProductos = data || [];
   renderProductos();
 }
+//nueva funcion
+window.autocompletarServicio = function(nombreInputId, imgInputId){
 
+  let nombre = document.getElementById(nombreInputId).value.toLowerCase();
+  let imgInput = document.getElementById(imgInputId);
+
+  if(!nombre || !imgInput) return;
+
+  // buscar coincidencia exacta o parcial
+  let servicio = listaServicios.find(s =>
+    s.nombre.toLowerCase() === nombre
+  );
+
+  if(servicio){
+    imgInput.value = servicio.imagen_url || "";
+  } else {
+    // opcional: limpiar si no coincide
+    imgInput.value = "";
+  }
+};
+//nueva fincion
 function renderProductos(){
 
   let filtrados = listaProductos.filter(p =>
