@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Panel Admin</title>
+
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <div class="sidebar">
+    <h2>⚡ PANEL</h2>
+
+    <button onclick="cargarVista('usuarios')">💰 Usuarios</button>
+    <button onclick="cargarVista('pedidos')">📦 Pedidos</button>
+    <button onclick="cargarVista('productos')">🛍 Cargar Tienda</button>
+    <button onclick="cargarVista('servicios')">🎬 Servicios</button>
+    <button onclick="cargarVista('proveedores')">🏢 Proveedores</button>
+    <button onclick="cargarVista('clientes')">💰 Clientes</button>
+    <button onclick="cargarVista('dashboard')">📊 Dashboard</button>
+  </div>
+
+  <div class="contenido" id="contenido"></div>
+
+</div>
+
+<script src="pedidos.js"></script>
+<script src="app.js"></script>
+<script src="clientes.js"></script>
+<script src="productos.js"></script>
+<script src="servicios.js"></script>
+<script src="proveedores.js"></script>
+<script src="usuarios.js"></script>
+<script src="dashboard.js"></script>
+
+</body>
+</html>
